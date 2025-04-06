@@ -22,18 +22,18 @@ pip install -r requirements.txt
 ## Project Structure
 
 - `src/`: Contains the main Python scripts
-  - `yfinance_example.py`: Example script demonstrating stock data analysis
+  - `ma_trading_strategy.py`: Example script demonstrating stock data analysis
 - `data/`: Directory for storing data files
 - `notebooks/`: Jupyter notebooks for analysis
 - `requirements.txt`: Project dependencies
 
 ## Example Usage
 
-Check out the example script in `src/yfinance_example.py` for a demonstration of how to use these libraries together. 
+Check out the example script in `src/ma_trading_strategy.py` for a demonstration of how to use these libraries together. 
 
 To run the updated code:
 ```bash
-python src/yfinance_example.py
+python src/ma_trading_strategy.py
 ```
 
 The script will:
