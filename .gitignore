@@ -29,8 +29,15 @@ wheels/
 *.swo
 .DS_Store
 
-# Project specific
-data/*.png
-data/*.csv
-data/*.json
+# Data files
+data/raw/*
+data/processed/*
+data/interim/*
+data/external/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/interim/.gitkeep
+!data/external/.gitkeep
+
+# Keep directory structure
 !data/.gitkeep 

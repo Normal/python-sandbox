@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
+import json
+import os
 
 def fetch_stock_data(symbol, period='1y'):
     """
@@ -10,7 +12,48 @@ def fetch_stock_data(symbol, period='1y'):
     """
     stock = yf.Ticker(symbol)
     df = stock.history(period=period)
-    return df
+    return df, stock
+
+def save_data(df, symbol, stock):
+    """
+    Save data in different formats and locations
+    """
+    # Create timestamp for unique filenames
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    # Save raw data (CSV)
+    raw_file = f'data/raw/{symbol}_{timestamp}_raw.csv'
+    df.to_csv(raw_file)
+    print(f"Raw data saved to: {raw_file}")
+    
+    # Save processed data (CSV with calculated indicators)
+    processed_df = calculate_technical_indicators(df.copy())
+    processed_file = f'data/processed/{symbol}_{timestamp}_processed.csv'
+    processed_df.to_csv(processed_file)
+    print(f"Processed data saved to: {processed_file}")
+    
+    # Save company info (JSON)
+    info_file = f'data/external/{symbol}_{timestamp}_info.json'
+    with open(info_file, 'w') as f:
+        json.dump(stock.info, f, indent=4)
+    print(f"Company info saved to: {info_file}")
+    
+    # Save interim calculations (JSON)
+    interim_data = {
+        'daily_returns': df['Close'].pct_change().to_dict(),
+        'volatility': df['Close'].pct_change().rolling(window=20).std().to_dict()
+    }
+    # Convert Timestamp index to string format for JSON serialization
+    interim_data = {
+        'daily_returns': {str(k): v for k, v in interim_data['daily_returns'].items()},
+        'volatility': {str(k): v for k, v in interim_data['volatility'].items()}
+    }
+    interim_file = f'data/interim/{symbol}_{timestamp}_calculations.json'
+    with open(interim_file, 'w') as f:
+        json.dump(interim_data, f, indent=4)
+    print(f"Interim calculations saved to: {interim_file}")
+    
+    return processed_df
 
 def show_ticker_info(symbol):
     """
@@ -77,11 +120,15 @@ def plot_stock_analysis(df, symbol):
     ax2.grid(True)
     
     plt.tight_layout()
-    # Save the figure
-    plt.savefig('data/stock_analysis.png')
+    
+    # Save the figure with timestamp
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    plot_file = f'data/processed/{symbol}_{timestamp}_analysis.png'
+    plt.savefig(plot_file)
+    print(f"Plot saved to: {plot_file}")
+    
     # Show the plot and keep it open
     plt.show()
-    # Note: plt.close() is removed to keep the window open
 
 def main():
     # Example: Analyze Apple stock
@@ -93,23 +140,21 @@ def main():
     
     # Fetch data
     print(f"\nFetching historical data for {symbol}...")
-    df = fetch_stock_data(symbol)
+    df, stock = fetch_stock_data(symbol)
     
-    # Calculate indicators
-    print("Calculating technical indicators...")
-    df = calculate_technical_indicators(df)
+    # Save data in different formats
+    print("\nSaving data in different formats...")
+    processed_df = save_data(df, symbol, stock)
     
     # Create visualization
-    print("Creating visualization...")
-    plot_stock_analysis(df, symbol)
+    print("\nCreating visualization...")
+    plot_stock_analysis(processed_df, symbol)
     
     # Print some basic statistics
     print("\nBasic Statistics:")
-    print(f"Average Daily Return: {df['Returns'].mean():.2%}")
-    print(f"Volatility: {df['Volatility'].mean():.2%}")
-    print(f"Current Price: ${df['Close'][-1]:.2f}")
-    
-    print("\nAnalysis complete! Check data/stock_analysis.png for the visualization.")
+    print(f"Average Daily Return: {processed_df['Returns'].mean():.2%}")
+    print(f"Volatility: {processed_df['Volatility'].mean():.2%}")
+    print(f"Current Price: ${processed_df['Close'][-1]:.2f}")
 
 if __name__ == "__main__":
     main() 
